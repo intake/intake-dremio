@@ -1,0 +1,3 @@
+intake
+pandas
+pyarrow >=4.0
