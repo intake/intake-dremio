@@ -44,7 +44,11 @@ class DremioSource(base.DataSource):
         }
 
         self._uri = uri
-        userinfo, hostname = self._uri.split('@')
+        if '://' in uri:
+            self._protocol, uri = uri.split('://')
+        else:
+            self._protocol = 'grpc+tcp'
+        userinfo, hostname = uri.split('@')
         self._hostname = hostname
         self._user, self._password = userinfo.split(':')
         self._sql_expr = sql_expr
@@ -53,7 +57,7 @@ class DremioSource(base.DataSource):
         super(DremioSource, self).__init__(metadata=metadata)
 
     def _load(self):
-        client = flight.FlightClient(f'grpc+tcp://{self._hostname}')
+        client = flight.FlightClient(f'{self._protocol}://{self._hostname}')
         client.authenticate(HttpDremioClientAuthHandler(self._user, self._password))
         info = client.get_flight_info(flight.FlightDescriptor.for_command(self._sql_expr))
         reader = client.do_get(info.endpoints[0].ticket)
