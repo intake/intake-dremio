@@ -55,8 +55,8 @@ class DremioSource(base.DataSource):
     def _load(self):
         client = flight.FlightClient(f'grpc+tcp://{self._hostname}')
         client.authenticate(HttpDremioClientAuthHandler(self._user, self._password))
-        info = flightclient.get_flight_info(flight.FlightDescriptor.for_command(self._sql_expr))
-        reader = flightclient.do_get(info.endpoints[0].ticket)
+        info = client.get_flight_info(flight.FlightDescriptor.for_command(self._sql_expr))
+        reader = client.do_get(info.endpoints[0].ticket)
         self._dataframe = reader.read_pandas()
 
     def _get_schema(self):
