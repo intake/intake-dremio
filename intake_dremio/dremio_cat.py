@@ -9,7 +9,7 @@ from .intake_dremio import DremioSource, HttpDremioClientAuthHandler
 class DremioCatalog(Catalog):
     
     name = 'dremio_cat'
-    __version__ = 'test'
+    __version__ = __version__
     
     _sql_expr = 'select * from INFORMATION_SCHEMA."TABLES"'
 

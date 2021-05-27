@@ -1,7 +1,6 @@
 import intake
-from intake_dremio import DremioSource
 
-import pandas as pd
+from intake_dremio import DremioSource
 
 # pytest imports this package last, so plugin is not auto-added
 intake.registry['dremio'] = DremioSource
