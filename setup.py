@@ -10,6 +10,9 @@ extras_require = {
         'codecov',
         'pytest-cov',
         'flake8',
+        'twine',
+        'rfc3986',
+        'keyring'
     ]
 }
 
