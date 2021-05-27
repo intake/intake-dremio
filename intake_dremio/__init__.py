@@ -7,3 +7,4 @@ del get_versions
 import intake
 
 from .intake_dremio import DremioSource
+from .dremio_cat import DremioCatalog
