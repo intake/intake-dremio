@@ -35,7 +35,7 @@ class DremioCatalog(Catalog):
 
     def _create_entry(self, row):
         name = f'{row.TABLE_SCHEMA}."{row.TABLE_NAME}"'
-        description = f'Dremio table {name} from {self._hostname}'
+        description = f'Dremio {row.TABLE_TYPE} {name} from {self._hostname}'
         args = {
             'uri': self._uri,
             'sql_expr': f'select * from {name}'
