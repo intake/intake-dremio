@@ -1,5 +1,4 @@
 from intake.source import base
-from pyarrow.flight import BasicAuth, ClientAuthHandler
 from pyarrow import flight
 
 from . import __version__
@@ -113,14 +112,14 @@ class DremioSource(base.DataSource):
 
     def _load(self):
         connection_args = {}
-        if tls:
+        if self._tls:
             connection_args["tls_root_certs"] = self._certs
         if not self._token:
             client_auth_middleware = DremioClientAuthMiddlewareFactory()
             connection_args['middleware'] = [client_auth_middleware]
         client = flight.FlightClient(
             f'{self._protocol}://{self._hostname}',
-            **conection_args
+            **connection_args
         )
         if self._token:
             bearer_token = ('authorization', self._token)
@@ -128,8 +127,8 @@ class DremioSource(base.DataSource):
             bearer_token = client.authenticate_basic_token(self._user, self._password)
         flight_desc = flight.FlightDescriptor.for_command(self._sql_expr)
         options = flight.FlightCallOptions(headers=[bearer_token])
-        flight_info = client.get_flight_info(fligh_desc, options)
-        reader = client.do_get(fligh_info.endpoints[0].ticket, options)
+        flight_info = client.get_flight_info(flight_desc, options)
+        reader = client.do_get(flight_info.endpoints[0].ticket, options)
         self._dataframe = reader.read_pandas()
 
     def _get_schema(self):
