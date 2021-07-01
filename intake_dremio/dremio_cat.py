@@ -43,7 +43,7 @@ class DremioCatalog(Catalog):
         flight_desc = flight.FlightDescriptor.for_command(self._sql_expr)
         options = flight.FlightCallOptions(headers=[bearer_token])
         flight_info = client.get_flight_info(flight_desc, options)
-        reader = client.do_get(info.endpoints[0].ticket, options)
+        reader = client.do_get(flight_info.endpoints[0].ticket, options)
         self._dataframe = reader.read_pandas()
         for _, row in self._dataframe.iterrows():
             self._create_entry(row)
