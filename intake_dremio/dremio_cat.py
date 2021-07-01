@@ -3,7 +3,7 @@ from intake.catalog.local import LocalCatalogEntry
 from pyarrow import flight
 
 from . import __version__
-from .intake_dremio import DremioSource, DremioClientAuthMiddlewareFactory
+from .intake_dremio import DremioSource, DremioClientAuthMiddlewareFactory, HttpDremioClientAuthHandler
 
 
 class DremioCatalog(Catalog):
@@ -39,9 +39,16 @@ class DremioCatalog(Catalog):
             f'{self._protocol}://{self._hostname}',
             **connection_args
         )
-        bearer_token = client.authenticate_basic_token(self._user, self._password)
+        try:
+            bearer_token = client.authenticate_basic_token(self._user, self._password)
+            headers = [bearer_token]
+        except Exception as e:
+            if self._tls:
+                raise e
+            client.authenticate(HttpDremioClientAuthHandler(self._user, self._password))
+            headers = []
         flight_desc = flight.FlightDescriptor.for_command(self._sql_expr)
-        options = flight.FlightCallOptions(headers=[bearer_token])
+        options = flight.FlightCallOptions(headers=headers)
         flight_info = client.get_flight_info(flight_desc, options)
         reader = client.do_get(flight_info.endpoints[0].ticket, options)
         self._dataframe = reader.read_pandas()
