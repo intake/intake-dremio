@@ -58,19 +58,16 @@ class DremioSource(base.DataSource):
         Enable encrypted connection
     cert: str
         Path to trusted certificates for encrypted connection
-    token: str
-        A personal access token issued by Dremio
     """
     name = 'dremio'
     version = __version__
     container = 'dataframe'
     partition_access = True
 
-    def __init__(self, uri, sql_expr, tls=False, cert=None, token=None, metadata={}):
+    def __init__(self, uri, sql_expr, tls=False, cert=None, metadata={}):
         self._init_args = {
             'uri': uri,
             'sql_expr': sql_expr,
-            'token': token,
             'tls': tls,
             'cert': cert,
             'metadata': metadata,
@@ -84,18 +81,10 @@ class DremioSource(base.DataSource):
                                  "does not supported encrypted connection.")
         else:
             self._protocol = 'grpc+tls' if tls else 'grpc+tcp'
-        if '@' in uri:
-            if token:
-                raise ValueError('Provide either username and password or token, not both.')
-            userinfo, hostname = uri.split('@')
-            self._user, self._password = userinfo.split(':')
-            self._token = None
-        elif token is None:
-            raise ValueError('URI must either include username and '
-                             'password or an explicit personal access '
-                             'token (PAT) must be supplied.')
-        else:
-            self._user, self._password, self._token = None, None, token
+        if '@' not in uri:
+            raise ValueError("Dremio URI must include username and password")
+        userinfo, hostname = uri.split('@')
+        self._user, self._password = userinfo.split(':')
         self._hostname = hostname
         self._tls = tls
         if cert is not None and tls:
@@ -111,20 +100,15 @@ class DremioSource(base.DataSource):
         super(DremioSource, self).__init__(metadata=metadata)
 
     def _load(self):
-        connection_args = {}
+        client_auth_middleware = DremioClientAuthMiddlewareFactory()
+        connection_args = {'middleware': [client_auth_middleware]}
         if self._tls:
             connection_args["tls_root_certs"] = self._certs
-        if not self._token:
-            client_auth_middleware = DremioClientAuthMiddlewareFactory()
-            connection_args['middleware'] = [client_auth_middleware]
         client = flight.FlightClient(
             f'{self._protocol}://{self._hostname}',
             **connection_args
         )
-        if self._token:
-            bearer_token = ('authorization', self._token)
-        else:
-            bearer_token = client.authenticate_basic_token(self._user, self._password)
+        bearer_token = client.authenticate_basic_token(self._user, self._password)
         flight_desc = flight.FlightDescriptor.for_command(self._sql_expr)
         options = flight.FlightCallOptions(headers=[bearer_token])
         flight_info = client.get_flight_info(flight_desc, options)
