@@ -7,7 +7,7 @@ from . import __version__
 class HttpDremioClientAuthHandler(flight.ClientAuthHandler):
 
     def __init__(self, username, password):
-        super(ClientAuthHandler, self).__init__()
+        super(flight.ClientAuthHandler, self).__init__()
         self.basic_auth = flight.BasicAuth(username, password)
         self.token = None
 
