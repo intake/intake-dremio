@@ -1,7 +1,7 @@
 {% set sdata = load_setup_py_data() %}
 
 package:
-  name: intake_dremio
+  name: intake-dremio
   version: {{ sdata['version'] }}
 
 source:
