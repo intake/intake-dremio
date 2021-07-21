@@ -77,9 +77,6 @@ def process_uri(uri, tls=False, user=None, password=None):
     """
     if '://' in uri:
         protocol, uri = uri.split('://')
-        if tls and 'tls' not in protocol:
-            raise ValueError(f"TLS was enabled but protocol {self._protocol} "
-                             "does not supported encrypted connection.")
     else:
         protocol = 'grpc+tls' if tls else 'grpc+tcp'
     if '@' in uri:
@@ -139,6 +136,9 @@ class DremioSource(base.DataSource):
         self._protocol, self._hostname, self._user, self._password = process_uri(
             uri, tls=tls, user=username, password=password
         )
+        if tls and 'tls' not in self._protocol:
+            raise ValueError(f"TLS was enabled but protocol {self._protocol} "
+                             "does not supported encrypted connection.")
         if cert is not None and tls:
             with open(cert, "rb") as root_certs:
                 self._certs = root_certs.read()
