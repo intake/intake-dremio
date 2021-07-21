@@ -60,6 +60,46 @@ class DremioClientAuthMiddlewareFactory(flight.ClientMiddlewareFactory):
         self.call_credential = call_credential
 
 
+def process_uri(uri, tls=False, user=None, password=None):
+    """
+    Extracts hostname, protocol, user and passworrd from URI
+
+    Parameters
+    ----------
+    uri: str or None
+        Connection string in the form username:password@hostname:port
+    tls: boolean
+        Whether TLS is enabled
+    username: str or None
+        Username if not supplied as part of the URI
+    password: str or None
+        Password if not supplied as part of the URI
+    """
+    if '://' in uri:
+        protocol, uri = uri.split('://')
+        if tls and 'tls' not in protocol:
+            raise ValueError(f"TLS was enabled but protocol {self._protocol} "
+                             "does not supported encrypted connection.")
+    else:
+        protocol = 'grpc+tls' if tls else 'grpc+tcp'
+    if '@' in uri:
+        if user or password:
+            raise ValueError(
+                "Dremio URI must not include username and password "
+                "if they were supplied explicitly."
+            )
+        userinfo, hostname = uri.split('@')
+        user, password = userinfo.split(':')
+    elif not (user and password):
+        raise ValueError(
+            "Dremio URI must include username and password "
+            "or they must be provided explicitly."
+        )
+    else:
+        hostname = uri
+    return protocol, hostname, user, password
+
+
 class DremioSource(base.DataSource):
     """
     One-shot SQL to dataframe reader (no partitioning)
@@ -70,6 +110,10 @@ class DremioSource(base.DataSource):
         Connection string in the form username:password@hostname:port
     sql_expr: str
         Query expression to pass to the DB backend
+    username: str or None
+        Username if not supplied as part of the URI
+    password: str or None
+        Password if not supplied as part of the URI
     tls: boolean
         Enable encrypted connection
     cert: str
@@ -80,29 +124,21 @@ class DremioSource(base.DataSource):
     container = 'dataframe'
     partition_access = True
 
-    def __init__(self, uri, sql_expr, tls=False, cert=None, metadata={}):
+    def __init__(self, uri, sql_expr, username=None, password=None, tls=False, cert=None, metadata={}):
         self._init_args = {
             'uri': uri,
+            'username': username,
+            'password': password,
             'sql_expr': sql_expr,
             'tls': tls,
             'cert': cert,
-            'metadata': metadata,
+            'metadata': metadata
         }
-
         self._uri = uri
-        if '://' in uri:
-            self._protocol, uri = uri.split('://')
-            if tls and 'tls' not in self._protocol:
-                raise ValueError(f"TLS was enabled but protocol {self._protocol}"
-                                 "does not supported encrypted connection.")
-        else:
-            self._protocol = 'grpc+tls' if tls else 'grpc+tcp'
-        if '@' not in uri:
-            raise ValueError("Dremio URI must include username and password")
-        userinfo, hostname = uri.split('@')
-        self._user, self._password = userinfo.split(':')
-        self._hostname = hostname
         self._tls = tls
+        self._protocol, self._hostname, self._user, self._password = process_uri(
+            uri, tls=tls, user=username, password=password
+        )
         if cert is not None and tls:
             with open(cert, "rb") as root_certs:
                 self._certs = root_certs.read()
@@ -115,7 +151,7 @@ class DremioSource(base.DataSource):
 
         super(DremioSource, self).__init__(metadata=metadata)
 
-    def _load(self):
+    def _get_reader(self):
         client_auth_middleware = DremioClientAuthMiddlewareFactory()
         connection_args = {'middleware': [client_auth_middleware]}
         if self._tls:
@@ -136,12 +172,16 @@ class DremioSource(base.DataSource):
         options = flight.FlightCallOptions(headers=headers)
         flight_info = client.get_flight_info(flight_desc, options)
         reader = client.do_get(flight_info.endpoints[0].ticket, options)
-        self._dataframe = reader.read_pandas()
+        return reader
+
+    def _load(self):
+        self._dataframe = self._get_reader().read_pandas()
+
+    def arrow_schema(self):
+        return self._get_reader().schema
 
     def _get_schema(self):
         if self._dataframe is None:
-            # TODO: could do read_sql with chunksize to get likely schema from
-            # first few records, rather than loading the whole thing
             self._load()
         return base.Schema(datashape=None,
                            dtype=self._dataframe.dtypes,
