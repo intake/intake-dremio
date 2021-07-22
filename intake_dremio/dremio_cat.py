@@ -28,7 +28,7 @@ class DremioCatalog(Catalog):
 
     def _create_entry(self, row):
         name = f'{row.TABLE_SCHEMA}."{row.TABLE_NAME}"'
-        description = f'Dremio {row.TABLE_TYPE} {name} from {self._hostname}'
+        description = f'Dremio {row.TABLE_TYPE} {name} from {self._source._hostname}'
         args = dict(self._source._init_args, sql_expr=f'SELECT * FROM {name}')
         e = LocalCatalogEntry(name, description, 'dremio', True,
                               args, {}, {}, {}, "", getenv=False,
