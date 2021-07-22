@@ -124,9 +124,9 @@ class DremioSource(base.DataSource):
     def __init__(self, uri, sql_expr, username=None, password=None, tls=False, cert=None, metadata={}):
         self._init_args = {
             'uri': uri,
+            'sql_expr': sql_expr,
             'username': username,
             'password': password,
-            'sql_expr': sql_expr,
             'tls': tls,
             'cert': cert,
             'metadata': metadata
@@ -148,7 +148,6 @@ class DremioSource(base.DataSource):
             self._certs = None
         self._sql_expr = sql_expr
         self._dataframe = None
-
         super(DremioSource, self).__init__(metadata=metadata)
 
     def _get_reader(self):
