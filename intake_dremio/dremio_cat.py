@@ -35,3 +35,21 @@ class DremioCatalog(Catalog):
                               getshell=False)
         e._plugin = [DremioSource]
         self._entries[name] = e
+
+    def create_source(self, sql_expr):
+        """
+        Create a DremioSource from the provided sql_expr with the 
+        credentials declared on this catalog.
+
+        Parameters
+        ----------
+        sql_expr: str
+            The SQL query to declare on the source.
+
+        Returns
+        -------
+        DremioSource:
+            Returns the DremioSource containing the provided sql_expr
+        """
+        args = dict(self._source._init_args, sql_expr=sql_expr)
+        return DremioSource(**args)
