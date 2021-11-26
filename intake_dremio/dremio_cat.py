@@ -1,8 +1,23 @@
+import uuid
+import pkg_resources
+
+from functools import lru_cache
+
 from intake.catalog.base import Catalog
 from intake.catalog.local import LocalCatalogEntry
 
 from . import __version__
 from .intake_dremio import DremioSource
+
+STATIC_FILES = ("static/css/style.css",)
+
+@lru_cache(None)
+def _load_static_files():
+    """Lazily load the resource files into memory the first time they are needed"""
+    return [
+        pkg_resources.resource_string("intake_dremio", fname).decode("utf8")
+        for fname in STATIC_FILES
+    ]
 
 
 class DremioCatalog(Catalog):
@@ -31,10 +46,52 @@ class DremioCatalog(Catalog):
         description = f'Dremio {row.TABLE_TYPE} {name} from {self._source._hostname}'
         args = dict(self._source._init_args, sql_expr=f'SELECT * FROM {name}')
         e = LocalCatalogEntry(name, description, 'dremio', True,
-                              args, {}, {}, {}, "", getenv=False,
+                              args, {}, {}, {}, "", getenv=True,
                               getshell=False)
         e._plugin = [DremioSource]
         self._entries[name] = e
+
+    def _repr_html_(self):
+        (css_style,) = _load_static_files()
+        uid = str(uuid.uuid4())
+        info = self._source._init_args
+        entries = []
+        for e in self:
+            euid = str(uuid.uuid4())
+            erepr = repr(self[e])
+            entry = f"""
+            <li class="dr-entry-item">
+              <div class="dr-entry-name"><span>{e}</span></div>
+              <input id="entry-{euid}" class="dr-entry-data-in" type="checkbox"></input>
+              <label for="entry-{euid}" class="dr-entry-data-label"><b>+</b></label>
+              <div class="dr-entry-data">
+                <pre>{erepr}</pre>
+                <br>
+              </div>
+            </li>
+            """
+            entries.append(entry)
+        entry_html = '\n'.join(entries)
+        return f"""
+        <div class="dr-wrap">
+        <style>{css_style}</style>
+        <div class="dr-header">
+          <div class="dr-obj-type">DremioCatalog: {info['uri']}</div>
+        </div>
+        <ul class="dr-sections">
+          <li class="dr-section-item">
+            <input id="section-{uid}" class="dr-section-summary-in" type="checkbox"></input>
+            <label for="section-{uid}" class="dr-section-summary">Entries</label>
+            <div class="dr-section-inline-details">{len(self)}</div>
+            <div class="dr-section-details">
+              <ul class="dr-entry-list">
+              {entry_html}
+              </ul>
+            </div>
+          </li>
+        </ul>
+        </div>
+        """
 
     def create_source(self, sql_expr):
         """
