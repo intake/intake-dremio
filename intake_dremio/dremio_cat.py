@@ -44,8 +44,8 @@ class DremioCatalog(Catalog):
     def __getitem__(self, key):
         normalized_key = key.replace('"', '').lower()
         cats = list(self)
-        normalized_cats = [cat.replace('"', '').lower() for cat in self]
-        if key not in self and normalized_key in normalized_cats:
+        normalized_cats = [cat.replace('"', '').lower() for cat in cats]
+        if key not in cats and normalized_key in normalized_cats:
             key = cats[normalized_cats.index(normalized_key)]
         return super().__getitem__(key)
 
