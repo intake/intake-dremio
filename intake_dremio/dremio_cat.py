@@ -41,15 +41,23 @@ class DremioCatalog(Catalog):
         for _, row in self._dataframe.iterrows():
             self._create_entry(row)
 
+    def __getitem__(self, key):
+        normalized_key = key.replace('"', '').lower()
+        cats = list(self)
+        normalized_cats = [cat.replace('"', '').lower() for cat in cats]
+        if key not in cats and normalized_key in normalized_cats:
+            key = cats[normalized_cats.index(normalized_key)]
+        return super().__getitem__(key)
+
     def _create_entry(self, row):
-        name = f'{row.TABLE_SCHEMA}."{row.TABLE_NAME}"'
-        description = f'Dremio {row.TABLE_TYPE} {name} from {self._source._hostname}'
-        args = dict(self._source._init_args, sql_expr=f'SELECT * FROM {name}')
-        e = LocalCatalogEntry(name, description, 'dremio', True,
+        path = f'"{row.TABLE_SCHEMA}"."{row.TABLE_NAME}"'
+        description = f'Dremio {row.TABLE_TYPE} {path} from {self._source._hostname}'
+        args = dict(self._source._init_args, sql_expr=f'SELECT * FROM {path}')
+        e = LocalCatalogEntry(path, description, 'dremio', True,
                               args, {}, {}, {}, "", getenv=True,
                               getshell=False)
         e._plugin = [DremioSource]
-        self._entries[name] = e
+        self._entries[path] = e
 
     def _repr_html_(self):
         (css_style,) = _load_static_files()
