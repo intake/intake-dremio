@@ -51,13 +51,13 @@ class DremioCatalog(Catalog):
 
     def _create_entry(self, row):
         path = f'"{row.TABLE_SCHEMA}"."{row.TABLE_NAME}"'
-        description = f'Dremio {row.TABLE_TYPE} {name} from {self._source._hostname}'
+        description = f'Dremio {row.TABLE_TYPE} {path} from {self._source._hostname}'
         args = dict(self._source._init_args, sql_expr=f'SELECT * FROM {path}')
-        e = LocalCatalogEntry(name, description, 'dremio', True,
+        e = LocalCatalogEntry(path, description, 'dremio', True,
                               args, {}, {}, {}, "", getenv=True,
                               getshell=False)
         e._plugin = [DremioSource]
-        self._entries[name] = e
+        self._entries[path] = e
 
     def _repr_html_(self):
         (css_style,) = _load_static_files()
