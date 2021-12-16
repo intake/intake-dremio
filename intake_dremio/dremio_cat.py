@@ -41,6 +41,13 @@ class DremioCatalog(Catalog):
         for _, row in self._dataframe.iterrows():
             self._create_entry(row)
 
+    def __getitem__(self, key):
+        normalized_key = key.replace('"', '').lower()
+        cats = [cat.replace('"', '').lower() for cat in self]
+        if key not in self and normalized_key in cats:
+            key = cats[cats.index(normalized_key)]
+        return super().__getitem__(key)
+
     def _create_entry(self, row):
         name = f'{row.TABLE_SCHEMA}."{row.TABLE_NAME}"'
         description = f'Dremio {row.TABLE_TYPE} {name} from {self._source._hostname}'
