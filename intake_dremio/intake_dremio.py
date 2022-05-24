@@ -137,7 +137,7 @@ class DremioSource(base.DataSource):
             'password': password,
             'tls': tls,
             'cert': cert,
-            'metadata': metadata
+            'metadata': metadata,
             'connect_timeout': connect_timeout,
             'request_timeout': request_timeout
         }
@@ -171,7 +171,7 @@ class DremioSource(base.DataSource):
             f'{self._protocol}://{self._hostname}',
             **connection_args
         )
-        auth_options = flight.FlightCallOptions(timeout=self._auth_timeout, headers=headers)
+        auth_options = flight.FlightCallOptions(timeout=self._connect_timeout, headers=headers)
         try:
             bearer_token = client.authenticate_basic_token(self._user, self._password)
             headers = [bearer_token]
