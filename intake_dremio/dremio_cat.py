@@ -9,7 +9,7 @@ from intake.catalog.local import LocalCatalogEntry
 from . import __version__
 from .intake_dremio import DremioSource
 
-STATIC_FILES = ("static/css/style.css",)
+STATIC_FILES = ("static/style.css",)
 
 @lru_cache(None)
 def _load_static_files():
@@ -58,6 +58,9 @@ class DremioCatalog(Catalog):
                               getshell=False)
         e._plugin = [DremioSource]
         self._entries[path] = e
+
+    # Override _ipython_display_ from baseclass
+    _ipython_display_ = None
 
     def _repr_html_(self):
         (css_style,) = _load_static_files()
