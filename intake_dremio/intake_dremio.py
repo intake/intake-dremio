@@ -115,13 +115,21 @@ class DremioSource(base.DataSource):
         Enable encrypted connection
     cert: str
         Path to trusted certificates for encrypted connection
+    connect_timeout: float or None
+        A timeout for the auth connect call, in seconds. None means
+        that the timeout defaults to an implementation-specific value.
+    request_timeout: float or None
+        A timeout for the request call, in seconds. None means that
+        the timeout defaults to an implementation-specific value.
     """
     name = 'dremio'
     version = __version__
     container = 'dataframe'
     partition_access = True
 
-    def __init__(self, uri, sql_expr, username=None, password=None, tls=False, cert=None, metadata={}):
+    def __init__(self, uri, sql_expr, username=None, password=None,
+                 tls=False, cert=None, metadata={}, connect_timeout=None,
+                 request_timeout=None):
         self._init_args = {
             'uri': uri,
             'sql_expr': sql_expr,
@@ -129,10 +137,14 @@ class DremioSource(base.DataSource):
             'password': password,
             'tls': tls,
             'cert': cert,
-            'metadata': metadata
+            'metadata': metadata,
+            'connect_timeout': connect_timeout,
+            'request_timeout': request_timeout
         }
         self._uri = uri
         self._tls = tls
+        self._connect_timeout = connect_timeout
+        self._request_timeout = request_timeout
         self._protocol, self._hostname, self._user, self._password = process_uri(
             uri, tls=tls, user=username, password=password
         )
@@ -159,16 +171,18 @@ class DremioSource(base.DataSource):
             f'{self._protocol}://{self._hostname}',
             **connection_args
         )
+        auth_options = flight.FlightCallOptions(timeout=self._connect_timeout)
         try:
             bearer_token = client.authenticate_basic_token(self._user, self._password)
             headers = [bearer_token]
         except Exception as e:
             if self._tls:
                 raise e
-            client.authenticate(HttpDremioClientAuthHandler(self._user, self._password))
+            handler = HttpDremioClientAuthHandler(self._user, self._password)
+            client.authenticate(handler, options=auth_options)
             headers = []
         flight_desc = flight.FlightDescriptor.for_command(self._sql_expr)
-        options = flight.FlightCallOptions(headers=headers)
+        options = flight.FlightCallOptions(headers=headers, timeout=self._request_timeout)
         flight_info = client.get_flight_info(flight_desc, options)
         reader = client.do_get(flight_info.endpoints[0].ticket, options)
         return reader
