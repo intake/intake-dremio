@@ -5,7 +5,7 @@ Dremio Plugin for Intake based on pyarrow Flight
 
 ## User Installation
 
-To install the intake-sql plugin, execute the following command
+To install the intake-dremio plugin, execute the following command
 
 ```
 conda install -c conda-forge intake-dremio
