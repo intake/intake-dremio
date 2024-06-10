@@ -16,20 +16,20 @@ jobs:
         shell: bash -l {0}
     env:
       CHANS_DEV: "-c conda-forge"
-      PKG_TEST_PYTHON: "--test-python=py37"
-      PYTHON_VERSION: "3.7"
+      PKG_TEST_PYTHON: "--test-python=py310"
+      PYTHON_VERSION: "3.10"
       CHANS: "-c pyviz"
     steps:
       - uses: actions/checkout@v2
       - name: Fetch unshallow
         run: git fetch --prune --tags --unshallow -f
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - uses: conda-incubator/setup-miniconda@v2
+      - uses: conda-incubator/setup-miniconda@v3
         with:
           miniconda-version: "latest"
-          python-version: 3.8
+          python-version: 3.10
       - name: Set output
         id: vars
         run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
@@ -55,7 +55,7 @@ jobs:
     env:
       CHANS_DEV: "-c pyviz/label/dev  -c conda-forge"
       PKG_TEST_PYTHON: "--test-python=py37"
-      PYTHON_VERSION: "3.7"
+      PYTHON_VERSION: "3.10"
       CHANS: "-c pyviz"
       PPU: ${{ secrets.PPU }}
       PPP: 
@@ -64,10 +64,10 @@ jobs:
       - uses: actions/checkout@v2
       - name: Fetch unshallow
         run: git fetch --prune --tags --unshallow -f
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - uses: conda-incubator/setup-miniconda@v2
+      - uses: conda-incubator/setup-miniconda@v3
         with:
           miniconda-version: "latest"
       - name: conda setup
