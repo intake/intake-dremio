@@ -25,10 +25,11 @@ jobs:
         run: git fetch --prune --tags --unshallow -f
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ PYTHON_VERSION }}
       - uses: conda-incubator/setup-miniconda@v3
         with:
-          miniconda-version: "latest"
+          auto-update-conda: true
+          python-version: ${{ PYTHON_VERSION }}
       - name: Set output
         id: vars
         run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
@@ -53,11 +54,9 @@ jobs:
         shell: bash -l {0}
     env:
       CHANS_DEV: "-c pyviz/label/dev  -c conda-forge"
-      PKG_TEST_PYTHON: "--test-python=py37"
+      PKG_TEST_PYTHON: "--test-python=py310"
       PYTHON_VERSION: "3.10"
       CHANS: "-c pyviz"
-      PPU: ${{ secrets.PPU }}
-      PPP: 
       PYPI: "https://upload.pypi.org/legacy/"
     steps:
       - uses: actions/checkout@v2
