@@ -23,7 +23,6 @@ jobs:
         shell: bash -l {0}
     env:
       PYTHON_VERSION: ${{ matrix.python-version }}
-      CHANS_DEV: "-c conda-forge"
     steps:
       - uses: actions/checkout@v2
         with:
