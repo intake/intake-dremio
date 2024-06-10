@@ -18,7 +18,7 @@ extras_require = {
 
 install_requires = [
     'pandas >=0.25',
-    'intake',
+    'intake <2',
     'pyarrow >=4.0'
 ]
 
