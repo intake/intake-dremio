@@ -9,7 +9,7 @@ source:
 
 build:
   noarch: python
-  script: python setup.py install --single-version-externally-managed --record=record.txt
+  script: {{ PYTHON }} -m pip install -vv {{ sdata['name'] }}-{{ VERSION }}-py3-none-any.whl
   entry_points:
     {% for group,epoints in sdata.get("entry_points", {}).items() %}
       {% for entry_point in epoints %}
