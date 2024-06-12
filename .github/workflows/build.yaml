@@ -36,7 +36,7 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v3
         with:
           miniconda-version: "latest"
-          python-version: "3.10"
+          python-version: ${{ env.PYTHON_VERSION }}
       - name: conda setup
         run: |
           conda install -y conda-build python-build
