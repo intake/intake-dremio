@@ -11,7 +11,6 @@ for file in dist/*.whl dist/*.tar.bz2; do
     fi
 done
 
-export SETUPTOOLS_ENABLE_FEATURES=legacy-editable
 git diff --exit-code
 python -m build -w .
 
