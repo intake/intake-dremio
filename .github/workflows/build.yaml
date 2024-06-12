@@ -25,11 +25,11 @@ jobs:
         run: git fetch --prune --tags --unshallow -f
       - uses: actions/setup-python@v5
         with:
-          python-version: $PYTHON_VERSION
+          python-version: "3.10"
       - uses: conda-incubator/setup-miniconda@v3
         with:
           auto-update-conda: true
-          python-version: $PYTHON_VERSION
+          python-version: "3.10"
       - name: Set output
         id: vars
         run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
