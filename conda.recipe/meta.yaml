@@ -24,9 +24,14 @@ requirements:
   run:
     - python {{ sdata['python_requires'] }}
     {% for dep in sdata.get('install_requires',{}) %}
+    {% if dep.startswith("pyarrow") %}
+    # Conda-forge split up pyarrow packages (libarrow-flight), default does not
+    # setup.py lower pins
+    - {{ dep }} ,<16
+    {% else %}
     - {{ dep }}
+    {% endif %}
     {% endfor %}
-    - libarrow-flight
 test:
   imports:
     - intake_dremio
