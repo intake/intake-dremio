@@ -26,6 +26,7 @@ requirements:
     {% for dep in sdata.get('install_requires',{}) %}
     - {{ dep }}
     {% endfor %}
+    - libarrow-flight
 test:
   imports:
     - intake_dremio
