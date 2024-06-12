@@ -17,6 +17,14 @@ or:
 pip install intake-dremio
 ```
 
+When installing from the `pyviz` channel and `conda-forge` conda channels, you must ensure that `libarrow-flight` is also installed:
+
+```
+conda install -c pyviz -c conda-forge intake-dremio libarrow-flight
+```
+
+This is because `conda-forge` has split up pyarrow into individual packages as of `pyarrow 16`.
+
 ## Example
 
 An Intake catalog referencing a Dremio dataset consists of the `uri` pointing to the Dremio instance along with a username and password and a SQL expression (`sql_expr`), e.g.:
