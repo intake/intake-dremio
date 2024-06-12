@@ -16,22 +16,21 @@ jobs:
       fail-fast: false
       matrix:
         os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
-        python-version: [3.6, 3.7, 3.8]
+        python-version: ["3.9", "3.10", "3.11"]
     timeout-minutes: 30
     defaults:
       run:
         shell: bash -l {0}
     env:
       PYTHON_VERSION: ${{ matrix.python-version }}
-      CHANS_DEV: "-c conda-forge"
     steps:
       - uses: actions/checkout@v2
         with:
           fetch-depth: "100"
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - uses: conda-incubator/setup-miniconda@v2
+      - uses: conda-incubator/setup-miniconda@v3
         with:
           miniconda-version: "latest"
       - name: Fetch
@@ -44,27 +43,22 @@ jobs:
           doit env_create ${{ env.CHANS_DEV}} --python=${{ matrix.python-version }}
       - name: doit develop_install
         run: |
-          eval "$(conda shell.bash hook)"
           conda activate test-environment
           conda list
           doit develop_install ${{ env.CHANS_DEV }} -o tests
       - name: doit env_capture
         run: |
-          eval "$(conda shell.bash hook)"
           conda activate test-environment
           doit env_capture
       - name: doit test_lint
         run: |
-          eval "$(conda shell.bash hook)"
           conda activate test-environment
           doit test_lint
       - name: doit test_unit
         run: |
-          eval "$(conda shell.bash hook)"
           conda activate test-environment
           doit test_unit_deploy
       - name: codecov
         run: |
-          eval "$(conda shell.bash hook)"
           conda activate test-environment
           codecov

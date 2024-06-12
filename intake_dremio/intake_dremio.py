@@ -1,3 +1,5 @@
+from functools import reduce
+
 from intake.source import base
 from pyarrow import flight
 
@@ -38,13 +40,23 @@ class DremioClientAuthMiddleware(flight.ClientMiddleware):
         self.factory = factory
 
     def received_headers(self, headers):
-        auth_header_key = 'authorization'
-        authorization_header = []
-        for key in headers:
-          if key.lower() == auth_header_key:
-            authorization_header = headers.get(auth_header_key)
-        self.factory.set_call_credential([
-            b'authorization', authorization_header[0].encode("utf-8")])
+        if self.factory.call_credential:
+            return
+
+        auth_header_key = "authorization"
+
+        authorization_header = reduce(
+            lambda result, header: (
+                header[1] if header[0] == auth_header_key else result
+            ),
+            headers.items(),
+        )
+        if not authorization_header:
+            raise Exception("Did not receive authorization header back from server.")
+        bearer_token = authorization_header[1][0]
+        self.factory.set_call_credential(
+            [b"authorization", bearer_token.encode("utf-8")]
+        )
 
 
 class DremioClientAuthMiddlewareFactory(flight.ClientMiddlewareFactory):
